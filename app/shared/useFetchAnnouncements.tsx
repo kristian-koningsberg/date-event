@@ -1,11 +1,31 @@
 import { useEffect, useState } from "react";
-import { TItemType } from "./types";
+// import { TItemType } from "./types";
 import { token, ocpKey } from "./apiRequestVariables";
 
 const baseUrl = "https://api.konciv.com/";
 
-const useFetchAnnouncements = () => {
-  const [itemTypes, setItemTypes] = useState<TItemType[]>([]);
+interface PropertyValue {
+  id: number;
+  value: string;
+  definitionId: number;
+  files: string[];
+}
+
+interface AnnouncementItem {
+  id: number;
+  name: string;
+  propertyValues: PropertyValue[];
+  createdBy: string;
+  lastUpdated: string;
+  projectId: number;
+  // itemNotifications: any[];
+}
+
+const useFetchAnnouncements = (
+  propertyDefinitionIdValue: number,
+  dateText: string
+) => {
+  const [data, setData] = useState<AnnouncementItem[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -62,12 +82,14 @@ const useFetchAnnouncements = () => {
                 dataType: "DATE",
                 operand1: {
                   _type: "itemProperty",
-                  propertyDefinitionId: 15933405,
+                  // propertyDefinitionId: 15933405,
+                  propertyDefinitionId: propertyDefinitionIdValue,
                 },
                 operand2: {
                   _type: "value",
                   dataType: "STRING",
-                  text: "2025-01-22T10:19:00+0100",
+                  // text: "2025-01-22T10:19:00+0100",
+                  text: dateText,
                   array: false,
                 },
                 operator: "EQ_DATE_ONLY",
@@ -87,26 +109,22 @@ const useFetchAnnouncements = () => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const arr = [];
         const data = await response.json();
-        console.log("Data fetched:", data);
-        console.log("Data structure:", JSON.stringify(data, null, 2));
-        if (data.items) {
-          setItemTypes(data.items); // Assuming the fetched data has an 'items' property
-        } else {
-          console.error("Data structure is not as expected:", data);
-          setError("Unexpected data structure");
-        }
+        setData(data);
       } catch (error) {
-        setError(error.message);
+        if (error instanceof Error) {
+          setError(error.message);
+        } else {
+          setError(String(error));
+        }
         console.error("Error fetching item types:", error);
       }
     };
 
     fetchAnnouncements();
-  }, []);
+  }, [propertyDefinitionIdValue, dateText]);
 
-  return { itemTypes, error };
+  return { data, error };
 };
 
 export default useFetchAnnouncements;
