@@ -3,9 +3,6 @@
 import { useEffect } from "react";
 import Announcements from "./shared/components/Announcement";
 import SickDetailsCard from "./shared/components/SickDetailsCard";
-// import { LuCalendarX2 } from "react-icons/lu";
-
-// import AnnouncementsBackup from "./shared/components/backup";
 
 export default function Home() {
   // NOTE!!
@@ -26,7 +23,7 @@ export default function Home() {
           <h1>Oversikt Hendelser</h1>
         </header>
         <section className="w-1/3">
-          <label className="font-bold">Fravær:</label>
+          <label className="font-bold">Fravær varsel:</label>
           <SickDetailsCard
             name="Børre Fraværson"
             message="Forkjølt. Tilbake imorgen."

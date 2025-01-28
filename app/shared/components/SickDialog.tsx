@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,6 @@ import {
 export function SickDialog({
   name,
   message,
-  date,
 }: {
   name: string;
   message: string;
@@ -21,7 +20,7 @@ export function SickDialog({
       <Dialog>
         <DialogTrigger asChild>
           {/* <Button variant="default">Les melding</Button> */}
-          <button className="bg-blue-500 text-white p-2 rounded-md border-none">
+          <button className="bg-none p-0 rounded-md border-none underline">
             Les melding
           </button>
         </DialogTrigger>

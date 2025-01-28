@@ -19,7 +19,7 @@ const SickDetailsCard = ({
         <LuCalendarX2 />
         <strong>{name}</strong>
       </div>
-      <p>{message}</p>
+      {/* <p>{message}</p> */}
       <SickDialog
         name={name}
         message={message}
