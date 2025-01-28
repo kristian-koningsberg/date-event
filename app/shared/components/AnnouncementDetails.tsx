@@ -39,18 +39,18 @@ const AnnouncementDetails: React.FC<AnnouncementDetailsProps> = ({
   imageDefinitionId,
   dateDefinitionId,
   descriptionDefinitionId,
-  testUrl,
+  fileUrl,
 }) => {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <div className="flex flex-col gap-4 w-full md:w-2/3">
         <Image
           // src={getImageUrl(selectedItem, imageDefinitionId)}
-          src={testUrl}
+          src={fileUrl}
           alt="Selected Item Image"
           width={200}
           height={200}
-          className="w-1/2 h-80 object-cover bg-slate-50"
+          className="w-full h-80 aspect-square object-cover bg-slate-50"
         />
         <div className="w-full mt-2">
           <div>

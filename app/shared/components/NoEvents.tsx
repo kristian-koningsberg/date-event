@@ -4,7 +4,7 @@ import Image from "next/image";
 const NoEvents = () => {
   return (
     <div className="h-full w-full flex flex-col items-center justify-start p-4">
-      <h3 className="text-2xl">No items found for today.</h3>
+      <h3 className="text-2xl">Ingen hendelser idag :)</h3>
 
       <Image
         src="/assets/freepik-no-events.svg"

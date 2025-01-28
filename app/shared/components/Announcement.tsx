@@ -1,17 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 // import Image from "next/image";
 import useFetchAnnouncements from "../useFetchAnnouncements";
 import { FaAngleDown, FaAngleUp } from "react-icons/fa";
 import NoEvents from "./NoEvents";
 import AnnouncementDetails from "./AnnouncementDetails";
 import { token, ocpKey } from "../apiRequestVariables";
-
-/**
- * NOTE!!!
- * Husk å referer og se på koden fra Adrian. Han har løsning og det
- * er da mulig å bruke den og tilpasse den til mitt bruk.
- * KodeFraAdrian.jsx
- */
 
 /**
  * =======================
@@ -35,8 +28,21 @@ interface AnnouncementItem {
   // itemNotifications: any[];
 }
 
-const Announcement = () => {
-  const propertyDefinitionId = 15933405;
+interface AnnouncementProps {
+  propertyDefinitionIdProp: number;
+  imageDefinitionIdProp: number;
+  dateDefinitionIdProp: number;
+  descriptionDefinitionIdProp: number;
+}
+
+const Announcement = ({
+  propertyDefinitionIdProp,
+  imageDefinitionIdProp,
+  dateDefinitionIdProp,
+  descriptionDefinitionIdProp,
+}: AnnouncementProps) => {
+  // const propertyDefinitionId = 15933405;
+  const propertyDefinitionId = propertyDefinitionIdProp;
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
@@ -52,6 +58,7 @@ const Announcement = () => {
   const [parsedImageUrl, setParsedImageUrl] = useState<string | null>(
     null
   );
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
 
   useEffect(() => {
     setDateText(selectedDate + "T00:00:00+0100");
@@ -59,7 +66,13 @@ const Announcement = () => {
 
   useEffect(() => {
     if (announcements?.length) {
-      setSelectedItemId(announcements[0].id);
+      // Sort announcements by lastUpdated in descending order
+      const sortedAnnouncements = [...announcements].sort(
+        (a, b) =>
+          new Date(b.lastUpdated).getTime() -
+          new Date(a.lastUpdated).getTime()
+      );
+      setSelectedItemId(sortedAnnouncements[0].id);
     }
   }, [announcements]);
 
@@ -70,6 +83,7 @@ const Announcement = () => {
    */
   const handleItemClick = (itemId: number) => {
     setSelectedItemId(itemId);
+    console.log("selectedItemId", selectedItemId);
   };
 
   const handleNextItemClick = () => {
@@ -96,13 +110,19 @@ const Announcement = () => {
    * =======================
    */
   const filteredItemsByDate = Array.isArray(announcements)
-    ? announcements.filter((item: AnnouncementItem) =>
-        item.propertyValues?.some(
-          ({ definitionId, value }) =>
-            definitionId === propertyDefinitionId &&
-            value.split("T")[0] === selectedDate
+    ? announcements
+        .filter((item: AnnouncementItem) =>
+          item.propertyValues?.some(
+            ({ definitionId, value }) =>
+              definitionId === propertyDefinitionId &&
+              value.split("T")[0] === selectedDate
+          )
         )
-      )
+        .sort(
+          (a, b) =>
+            new Date(b.lastUpdated).getTime() -
+            new Date(a.lastUpdated).getTime()
+        )
     : [];
 
   useEffect(() => {
@@ -115,6 +135,7 @@ const Announcement = () => {
     (item) => item.id === selectedItemId
   );
 
+  console.log("selectedItem", selectedItem);
   // Helper function to get property value by definitionId
   const getPropertyValue = (
     item: AnnouncementItem,
@@ -128,6 +149,7 @@ const Announcement = () => {
   };
 
   useEffect(() => {
+    setFileUrl(null); // Reset the fileUrl state
     if (selectedItem?.propertyValues[2]?.value) {
       try {
         const parsedPreValue = JSON.parse(
@@ -143,34 +165,17 @@ const Announcement = () => {
     }
   }, [selectedItem]);
 
-  // NOTE!!
-  // SKRIV INN DENNE URL I CHROME FOR Å FINNE ITEM(S) https://hub.konciv.com/items
-
-  if (selectedItem?.propertyValues[2]?.value) {
-    try {
-      const parsedPreValue = JSON.parse(
-        selectedItem.propertyValues[2].value
-      );
-      const filePathObject = parsedPreValue.find(
-        (item: any) => item.filePath
-      );
-      console.log("filePathObject", filePathObject);
-      if (filePathObject) {
-        // console.log("Parsed IMAGE TRY", filePathObject.filePath);
-        const parsedValue = filePathObject.filePath;
-        console.log("parsedValue", parsedValue);
-      } else {
-        console.error("No filePath found in parsedPreValue");
-      }
-    } catch (error) {
-      console.error("Error parsing JSON:", error);
+  const fetchFileDetails = async (filePath: string | null) => {
+    if (!filePath) {
+      console.error("Invalid filePath:", filePath);
+      return null;
     }
-  }
 
-  const fetchFileDetails = async (filePath) => {
     try {
       const response = await fetch(
-        `https://api.konciv.com/api/files/575ffb78-f6eb-474f-b217-68a7ea83e1544874190677983796196`,
+        `https://api.konciv.com/api/files/v2/${
+          filePath.split("/api/files/")[1]
+        }`,
         {
           method: "GET",
           headers: {
@@ -187,28 +192,57 @@ const Announcement = () => {
       }
 
       const blob = await response.blob();
-      const url = blob ? URL.createObjectURL(blob) : null;
-      return url;
+      return blob ? URL.createObjectURL(blob) : null;
     } catch (error) {
       console.error("Error in fetching file details:", error);
       return null;
     }
   };
+
+  console.log("selecteditem", selectedItem);
+  useEffect(() => {
+    if (!selectedItem) {
+      return;
+    }
+
+    const fetchFile = async () => {
+      const propertyValue = selectedItem.propertyValues.find(
+        // (prop) => prop.definitionId === 15933407
+        (prop) => prop.definitionId === imageDefinitionIdProp
+      );
+
+      if (propertyValue) {
+        try {
+          const parsedPreValue = JSON.parse(propertyValue.value);
+          const filePathObject = parsedPreValue.find(
+            (item: any) => item.filePath
+          );
+
+          if (filePathObject) {
+            const fileUrl = await fetchFileDetails(
+              filePathObject.filePath
+            );
+            setFileUrl(fileUrl);
+          } else {
+            console.error(
+              "No valid filePath found in parsedPreValue"
+            );
+          }
+        } catch (error) {
+          console.error("Error parsing JSON:", error);
+        }
+      } else {
+        console.error(
+          `No property value found with definitionId ${imageDefinitionIdProp}`
+        );
+      }
+    };
+
+    fetchFile();
+  }, [selectedItem]);
+
   console.log("fetchFileDetails", fetchFileDetails(parsedImageUrl));
-  let testUrl = fetchFileDetails(parsedImageUrl);
 
-  // Helper function to secure a valid image URL including fallback image illustration.
-  const getImageUrl = (
-    item: AnnouncementItem,
-    definitionId: number
-  ): string => {
-    const url = getPropertyValue(item, definitionId);
-    return url && url.startsWith("http")
-      ? url
-      : "/assets/freepik-illustration3.svg";
-  };
-
-  // console.log(parsedValue);
   return (
     <>
       {fetchError ? (
@@ -222,7 +256,7 @@ const Announcement = () => {
                 <label
                   htmlFor="date"
                   className="font-bold">
-                  Select Date:{" "}
+                  Velg dato:{" "}
                 </label>
                 <input
                   className="border border-gray-400 p-2"
@@ -283,7 +317,11 @@ const Announcement = () => {
                       {item.name}
                     </h3>
                     <p className="max-w-[50ch] truncate">
-                      {getPropertyValue(item, 15933406)}
+                      {/* {getPropertyValue(item, 15933406)} */}
+                      {getPropertyValue(
+                        item,
+                        descriptionDefinitionIdProp
+                      )}
                     </p>
                   </div>
                 ))}
@@ -312,11 +350,11 @@ const Announcement = () => {
             <AnnouncementDetails
               selectedItem={selectedItem}
               getPropertyValue={getPropertyValue}
-              getImageUrl={getImageUrl}
-              testUrl={testUrl}
-              imageDefinitionId={15933407}
-              dateDefinitionId={15933405}
-              descriptionDefinitionId={15933406}
+              // getImageUrl={getImageUrl}
+              fileUrl={fileUrl || "/assets/freepik-illustration3.svg"}
+              imageDefinitionId={imageDefinitionIdProp}
+              dateDefinitionId={dateDefinitionIdProp}
+              descriptionDefinitionId={descriptionDefinitionIdProp}
             />
           ) : (
             <NoEvents />
