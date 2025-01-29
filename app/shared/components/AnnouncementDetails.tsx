@@ -1,4 +1,3 @@
-import React, { Suspense } from "react";
 import Image from "next/image";
 
 interface PropertyValue {
@@ -23,69 +22,60 @@ interface AnnouncementDetailsProps {
     item: AnnouncementItem,
     definitionId: number
   ) => string | undefined;
-  getImageUrl: (
-    item: AnnouncementItem,
-    definitionId: number
-  ) => string;
   imageDefinitionId: number;
   dateDefinitionId: number;
   descriptionDefinitionId: number;
+  fileUrl: string | null;
 }
 
 const AnnouncementDetails: React.FC<AnnouncementDetailsProps> = ({
   selectedItem,
   getPropertyValue,
-  getImageUrl,
-  imageDefinitionId,
   dateDefinitionId,
   descriptionDefinitionId,
   fileUrl,
 }) => {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <div className="flex flex-col gap-4 w-full md:w-2/3">
+    <div className="flex flex-col gap-4 w-full md:w-2/3">
+      {fileUrl ? (
         <Image
-          src={fileUrl || "/assets/freepik-illustration3.svg"}
+          src={fileUrl}
           alt="Selected Item Image"
           width={200}
           height={200}
+          priority={true}
           className="w-full h-80 aspect-square object-cover bg-slate-50"
         />
-        <div className="w-full mt-2">
-          <div>
-            <h2 className="text-2xl font-bold">
-              {selectedItem.name}
-            </h2>
-            <p className="text-xs">
-              Date:{" "}
-              {new Date(
-                getPropertyValue(selectedItem, dateDefinitionId) || ""
-              ).toLocaleDateString()}
-            </p>
-            <p className="text-xs">
-              Tid:
-              {new Date(selectedItem.lastUpdated).toLocaleTimeString(
-                [],
-                {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                  hour12: false,
-                }
-              )}
-            </p>
-          </div>
-          <div className="md:text-lg mt-4">
-            <p className="leading-relaxed">
-              {getPropertyValue(
-                selectedItem,
-                descriptionDefinitionId
-              )}
-            </p>
-          </div>
+      ) : null}
+      <div className="w-full mt-2">
+        <div>
+          <h2 className="text-2xl font-bold">{selectedItem.name}</h2>
+          <p className="text-xs">
+            Date:{" "}
+            {new Date(
+              getPropertyValue(selectedItem, dateDefinitionId) || ""
+            ).toLocaleDateString()}
+          </p>
+          <p className="text-xs">
+            Tid:
+            {new Date(selectedItem.lastUpdated).toLocaleTimeString(
+              [],
+              {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: false,
+              }
+            )}
+          </p>
+        </div>
+        <div className="md:text-lg mt-4">
+          <p className="leading-relaxed">
+            {getPropertyValue(selectedItem, descriptionDefinitionId)}
+          </p>
         </div>
       </div>
-    </Suspense>
+    </div>
   );
 };
 

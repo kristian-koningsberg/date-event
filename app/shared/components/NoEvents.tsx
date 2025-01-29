@@ -11,6 +11,7 @@ const NoEvents = () => {
         alt="No items found illustration"
         width={200}
         height={200}
+        priority={true}
         className="w-80 h-80 object-cover bg-slate-50"
       />
     </div>

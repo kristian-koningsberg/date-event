@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 // import { TItemType } from "./types";
-import { token, ocpKey } from "./apiRequestVariables";
+import { token, ocpKey } from "../apiRequestVariables";
 
 const baseUrl = "https://api.konciv.com/";
 

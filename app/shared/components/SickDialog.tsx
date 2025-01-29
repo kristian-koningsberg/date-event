@@ -33,8 +33,10 @@ export function SickDialog({
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px] border-orange-500">
           <DialogHeader>
-            <LuCalendarX2 className="w-6" />
-            <DialogTitle>{name}</DialogTitle>
+            <div className="flex flex-col items-center justify-center md:items-start md:justify-start gap-2">
+              <LuCalendarX2 className="w-6" />
+              <DialogTitle>{name}</DialogTitle>
+            </div>
             <DialogDescription>{message}</DialogDescription>
           </DialogHeader>
         </DialogContent>
