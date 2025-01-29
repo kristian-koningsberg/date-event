@@ -1,7 +1,8 @@
-import React, { use, useEffect, useState } from "react";
-// import Image from "next/image";
+import React, { useEffect, useState, useMemo } from "react";
 import useFetchAnnouncements from "../useFetchAnnouncements";
-import { FaAngleDown, FaAngleUp } from "react-icons/fa";
+import { FaAngleDown, FaAngleUp, FaAngleRight } from "react-icons/fa";
+import { FaThumbsUp } from "react-icons/fa6";
+
 import NoEvents from "./NoEvents";
 import AnnouncementDetails from "./AnnouncementDetails";
 import { token, ocpKey } from "../apiRequestVariables";
@@ -25,7 +26,6 @@ interface AnnouncementItem {
   createdBy: string;
   lastUpdated: string;
   projectId: number;
-  // itemNotifications: any[];
 }
 
 interface AnnouncementProps {
@@ -35,27 +35,71 @@ interface AnnouncementProps {
   descriptionDefinitionIdProp: number;
 }
 
+/**
+ * =======================
+ * UTILITY FUNCTIONS
+ * =======================
+ */
+const getPropertyValue = (
+  item: AnnouncementItem,
+  definitionId: number
+): string | undefined => {
+  return (
+    item.propertyValues?.find(
+      (prop) => prop.definitionId === definitionId
+    )?.value || undefined
+  );
+};
+
+const fetchFileDetails = async (
+  filePath: string | null
+): Promise<string | null> => {
+  if (!filePath) {
+    console.error("Invalid filePath:", filePath);
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `https://api.konciv.com/api/files/v2/${
+        filePath.split("/api/files/")[1]
+      }`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: token,
+          "Ocp-Apim-Subscription-Key": ocpKey,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Error fetching file: ${response.statusText}`);
+    }
+
+    const blob = await response.blob();
+    return blob ? URL.createObjectURL(blob) : null;
+  } catch (error) {
+    console.error("Error in fetching file details:", error);
+    return null;
+  }
+};
+
 const Announcement = ({
   propertyDefinitionIdProp,
   imageDefinitionIdProp,
   dateDefinitionIdProp,
   descriptionDefinitionIdProp,
 }: AnnouncementProps) => {
-  // const propertyDefinitionId = 15933405;
-  const propertyDefinitionId = propertyDefinitionIdProp;
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
   const [dateText, setDateText] = useState<string>(
     selectedDate + "T00:00:00+0100"
   );
-
   const { data: announcements, error: fetchError } =
-    useFetchAnnouncements(propertyDefinitionId, dateText);
+    useFetchAnnouncements(propertyDefinitionIdProp, dateText);
   const [selectedItemId, setSelectedItemId] = useState<number | null>(
-    null
-  );
-  const [parsedImageUrl, setParsedImageUrl] = useState<string | null>(
     null
   );
   const [fileUrl, setFileUrl] = useState<string | null>(null);
@@ -66,7 +110,6 @@ const Announcement = ({
 
   useEffect(() => {
     if (announcements?.length) {
-      // Sort announcements by lastUpdated in descending order
       const sortedAnnouncements = [...announcements].sort(
         (a, b) =>
           new Date(b.lastUpdated).getTime() -
@@ -76,138 +119,43 @@ const Announcement = ({
     }
   }, [announcements]);
 
-  /**
-   * =======================
-   * EVENT HANDLER FUNCTIONS
-   * =======================
-   */
-  const handleItemClick = (itemId: number) => {
-    setSelectedItemId(itemId);
-    console.log("selectedItemId", selectedItemId);
-  };
-
-  const handleNextItemClick = () => {
-    const currentIndex = filteredItemsByDate.findIndex(
-      (item) => item.id === selectedItemId
-    );
-    if (currentIndex < filteredItemsByDate.length - 1) {
-      setSelectedItemId(filteredItemsByDate[currentIndex + 1].id);
-    }
-  };
-
-  const handlePrevItemClick = () => {
-    const currentIndex = filteredItemsByDate.findIndex(
-      (item) => item.id === selectedItemId
-    );
-    if (currentIndex > 0) {
-      setSelectedItemId(filteredItemsByDate[currentIndex - 1].id);
-    }
-  };
-
-  /**
-   * =======================
-   * FILTERED ITEMS BY DATE
-   * =======================
-   */
-  const filteredItemsByDate = Array.isArray(announcements)
-    ? announcements
-        .filter((item: AnnouncementItem) =>
-          item.propertyValues?.some(
-            ({ definitionId, value }) =>
-              definitionId === propertyDefinitionId &&
-              value.split("T")[0] === selectedDate
+  const filteredItemsByDate = useMemo(() => {
+    return Array.isArray(announcements)
+      ? announcements
+          .filter((item: AnnouncementItem) =>
+            item.propertyValues?.some(
+              ({ definitionId, value }) =>
+                definitionId === propertyDefinitionIdProp &&
+                value.split("T")[0] === selectedDate
+            )
           )
-        )
-        .sort(
-          (a, b) =>
-            new Date(b.lastUpdated).getTime() -
-            new Date(a.lastUpdated).getTime()
-        )
-    : [];
+          .sort(
+            (a, b) =>
+              new Date(b.lastUpdated).getTime() -
+              new Date(a.lastUpdated).getTime()
+          )
+      : [];
+  }, [announcements, propertyDefinitionIdProp, selectedDate]);
 
   useEffect(() => {
-    if (filteredItemsByDate.length > 0) {
+    if (filteredItemsByDate.length > 0 || null) {
       setSelectedItemId(filteredItemsByDate[0].id);
     }
-  }, [selectedDate]);
+  }, [filteredItemsByDate]);
 
-  const selectedItem = filteredItemsByDate.find(
-    (item) => item.id === selectedItemId
-  );
-
-  console.log("selectedItem", selectedItem);
-  // Helper function to get property value by definitionId
-  const getPropertyValue = (
-    item: AnnouncementItem,
-    definitionId: number
-  ): string | undefined => {
-    return (
-      item.propertyValues?.find(
-        (prop) => prop.definitionId === definitionId
-      )?.value || undefined
+  const selectedItem = useMemo(() => {
+    return filteredItemsByDate.find(
+      (item) => item.id === selectedItemId
     );
-  };
+  }, [filteredItemsByDate, selectedItemId]);
 
   useEffect(() => {
-    setFileUrl(null); // Reset the fileUrl state
-    if (selectedItem?.propertyValues[2]?.value) {
-      try {
-        const parsedPreValue = JSON.parse(
-          selectedItem.propertyValues[2].value
-        );
-        console.log("Parsed IMAGE TRY", parsedPreValue[1].filePath);
-        const parsedValue = parsedPreValue[1].filePath;
-        console.log("Parsed IMAGE TRY 2", parsedValue);
-        setParsedImageUrl(parsedValue); // Update the state with the parsed value
-      } catch (error) {
-        console.error("Error parsing JSON:", error);
-      }
-    }
-  }, [selectedItem]);
-
-  const fetchFileDetails = async (filePath: string | null) => {
-    if (!filePath) {
-      console.error("Invalid filePath:", filePath);
-      return null;
-    }
-
-    try {
-      const response = await fetch(
-        `https://api.konciv.com/api/files/v2/${
-          filePath.split("/api/files/")[1]
-        }`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: token,
-            "Ocp-Apim-Subscription-Key": ocpKey,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          `Error fetching file: ${response.statusText}`
-        );
-      }
-
-      const blob = await response.blob();
-      return blob ? URL.createObjectURL(blob) : null;
-    } catch (error) {
-      console.error("Error in fetching file details:", error);
-      return null;
-    }
-  };
-
-  console.log("selecteditem", selectedItem);
-  useEffect(() => {
-    if (!selectedItem) {
-      return;
-    }
-
     const fetchFile = async () => {
+      setFileUrl(null);
+
+      if (!selectedItem) return;
+
       const propertyValue = selectedItem.propertyValues.find(
-        // (prop) => prop.definitionId === 15933407
         (prop) => prop.definitionId === imageDefinitionIdProp
       );
 
@@ -239,9 +187,34 @@ const Announcement = ({
     };
 
     fetchFile();
-  }, [selectedItem]);
+  }, [selectedItem, imageDefinitionIdProp]);
 
-  console.log("fetchFileDetails", fetchFileDetails(parsedImageUrl));
+  /**
+   * =======================
+   * HANDLERS
+   * =======================
+   */
+  const handleItemClick = (itemId: number) => {
+    setSelectedItemId(itemId);
+  };
+
+  const handleNextItemClick = () => {
+    const currentIndex = filteredItemsByDate.findIndex(
+      (item) => item.id === selectedItemId
+    );
+    if (currentIndex < filteredItemsByDate.length - 1) {
+      setSelectedItemId(filteredItemsByDate[currentIndex + 1].id);
+    }
+  };
+
+  const handlePrevItemClick = () => {
+    const currentIndex = filteredItemsByDate.findIndex(
+      (item) => item.id === selectedItemId
+    );
+    if (currentIndex > 0) {
+      setSelectedItemId(filteredItemsByDate[currentIndex - 1].id);
+    }
+  };
 
   return (
     <>
@@ -251,7 +224,7 @@ const Announcement = ({
         <div className="flex flex-col md:flex-row gap-2 py-4">
           {/* FILTER UI */}
           <section className="md:h-screen md:overflow-y-auto w-full md:w-1/3">
-            <div className=" flex flex-row">
+            <div className="flex flex-row">
               <div className="flex flex-col">
                 <label
                   htmlFor="date"
@@ -270,8 +243,13 @@ const Announcement = ({
                 />
               </div>
             </div>
-            {filteredItemsByDate.length === 0 ? (
-              <></>
+            {filteredItemsByDate.length === 0 || null ? (
+              <>
+                <div className="rounded-sm border border-green-500 bg-green-50 p-2 mt-4 w-full flex items-center gap-2 text-green-900">
+                  <i>Wooho! Ingen hendelser idag.</i>
+                  <FaThumbsUp className="w-6 h-6" />
+                </div>
+              </>
             ) : (
               <div className="flex flex-col">
                 <div className="flex flex-row w-full justify-between items-center">
@@ -307,17 +285,25 @@ const Announcement = ({
                 {filteredItemsByDate.map((item) => (
                   <div
                     key={item.id}
-                    className={`transition-all duration-300 hidden md:block group p-2 border cursor-pointer hover:border-green-200 ${
+                    className={`transition-all duration-300 hidden md:block group p-2 border-b-2 cursor-pointer hover:border-green-200 ${
                       selectedItemId === item.id
                         ? "bg-green-100 border-green-500 text-green-950"
                         : "bg-white text-gray-700"
                     }`}
                     onClick={() => handleItemClick(item.id)}>
-                    <h3 className="text-base font-bold group-hover:underline">
-                      {item.name}
-                    </h3>
+                    <div className="flex flex-row justify-between items-center">
+                      <h3 className="text-base font-bold group-hover:underline">
+                        {item.name}
+                      </h3>
+                      <FaAngleRight
+                        className={`w-4 h-4 transition-all duration-300 transform ${
+                          selectedItemId === item.id
+                            ? "rotate-0"
+                            : "rotate-90 opacity-40"
+                        }`}
+                      />
+                    </div>
                     <p className="max-w-[50ch] truncate">
-                      {/* {getPropertyValue(item, 15933406)} */}
                       {getPropertyValue(
                         item,
                         descriptionDefinitionIdProp
@@ -350,8 +336,7 @@ const Announcement = ({
             <AnnouncementDetails
               selectedItem={selectedItem}
               getPropertyValue={getPropertyValue}
-              // getImageUrl={getImageUrl}
-              fileUrl={fileUrl || "/assets/freepik-illustration3.svg"}
+              fileUrl={fileUrl}
               imageDefinitionId={imageDefinitionIdProp}
               dateDefinitionId={dateDefinitionIdProp}
               descriptionDefinitionId={descriptionDefinitionIdProp}
@@ -359,8 +344,6 @@ const Announcement = ({
           ) : (
             <NoEvents />
           )}
-
-          {/* EVENT UI */}
         </div>
       )}
     </>

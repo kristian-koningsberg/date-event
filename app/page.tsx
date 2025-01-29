@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Announcements from "./shared/components/Announcement";
 import SickDetailsCard from "./shared/components/SickDetailsCard";
+import { SickDialog } from "./shared/components/SickDialog";
 
 export default function Home() {
   // NOTE!!
@@ -22,11 +23,11 @@ export default function Home() {
         <header className="text-3xl font-bold">
           <h1>Oversikt Hendelser</h1>
         </header>
-        <section className="w-1/3">
+        <section className="w-full md:w-1/3">
           <label className="font-bold">Fravær varsel:</label>
-          <SickDetailsCard
+          <SickDialog
             name="Børre Fraværson"
-            message="Forkjølt. Tilbake imorgen."
+            message="Forkjølt. Tilbake imorgen. lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
           />
         </section>
         {/* {FetchItemTypes()} */}

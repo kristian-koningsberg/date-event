@@ -1,4 +1,3 @@
-// import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,6 +6,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { LuCalendarX2 } from "react-icons/lu";
 
 export function SickDialog({
   name,
@@ -16,16 +16,24 @@ export function SickDialog({
   message: string;
 }) {
   return (
-    <div className="w-fit">
+    <div>
       <Dialog>
         <DialogTrigger asChild>
-          {/* <Button variant="default">Les melding</Button> */}
-          <button className="bg-none p-0 rounded-md border-none underline">
-            Les melding
-          </button>
+          <div className="text-orange-950 flex flex-col p-2 rounded-sm border border-orange-500 bg-orange-50 w-full cursor-pointer">
+            <div>
+              <div className="flex items-center gap-2">
+                <LuCalendarX2 className="w-6" />
+                <strong className="">{name}</strong>
+              </div>
+              <div className="hidden md:block">
+                <i className="opacity-70 line-clamp-1">{message}</i>
+              </div>
+            </div>
+          </div>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] border-orange-500">
           <DialogHeader>
+            <LuCalendarX2 className="w-6" />
             <DialogTitle>{name}</DialogTitle>
             <DialogDescription>{message}</DialogDescription>
           </DialogHeader>

@@ -45,8 +45,7 @@ const AnnouncementDetails: React.FC<AnnouncementDetailsProps> = ({
     <Suspense fallback={<div>Loading...</div>}>
       <div className="flex flex-col gap-4 w-full md:w-2/3">
         <Image
-          // src={getImageUrl(selectedItem, imageDefinitionId)}
-          src={fileUrl}
+          src={fileUrl || "/assets/freepik-illustration3.svg"}
           alt="Selected Item Image"
           width={200}
           height={200}
