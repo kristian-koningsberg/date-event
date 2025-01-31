@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import Announcements from "./shared/components/Announcement";
 import { SickDialog } from "./shared/components/SickDialog";
 import useFetchFileDetails from "./shared/hooks/useFetchFileDetails";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const propertyDefinitionId = 15933405;
   const imageDefinitionId = 15933407;
   const dateDefinitionId = 15933405;
   const descriptionDefinitionId = 15933406;
+  const [showDialogList, setShowDialogList] = useState(false);
 
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const fileUrl = useFetchFileDetails(
@@ -17,6 +19,12 @@ export default function Home() {
     imageDefinitionId
   );
 
+  // Create a handler that turns the dialog list on and off
+  const handleDialogList = () => {
+    setShowDialogList(!showDialogList);
+  };
+
+  // FAKE DATA FOR TESTING PURPOSES WITH "Fravær"
   const sickDataArray = [
     {
       name: "Børre Fraværson",
@@ -41,16 +49,37 @@ export default function Home() {
         <header className="text-3xl font-bold">
           <h1>Oversikt Hendelser</h1>
         </header>
-        <section className="w-full md:w-1/3">
-          <label className="font-bold">Fravær varsel:</label>
-          <div className="flex flex-col gap-2">
-            {sickDataArray.map((sickData) => (
-              <SickDialog
-                key={sickData.name}
-                name={sickData.name}
-                message={sickData.message}
-              />
-            ))}
+        {/*
+          ========= TODO ================= 
+          Data is fake. It should be fetched from an API.
+          ========= TODO =================
+        */}
+        <section className="w-full md:w-1/3 border-b pb-4">
+          <label className="font-bold">Fravær varsel: </label>
+          {sickDataArray ? (
+            <Button
+              onClick={handleDialogList}
+              variant="link"
+              size="sm"
+              title="Vis eller skjul fravær"
+              className="underline hover:bg-orange-50">
+              {showDialogList ? "Skjul" : "Vis"} fravær (
+              {sickDataArray.length})
+            </Button>
+          ) : (
+            <p>Alle er på plass idag :)</p>
+          )}
+
+          <div className={showDialogList ? "block" : "hidden"}>
+            <div className="flex flex-col gap-2">
+              {sickDataArray.map((sickData) => (
+                <SickDialog
+                  key={sickData.name}
+                  name={sickData.name}
+                  message={sickData.message}
+                />
+              ))}
+            </div>
           </div>
         </section>
         <Announcements
