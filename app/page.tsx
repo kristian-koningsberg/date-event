@@ -11,7 +11,9 @@ export default function Home() {
   const imageDefinitionId = 15933407;
   const dateDefinitionId = 15933405;
   const descriptionDefinitionId = 15933406;
-  const [showDialogList, setShowDialogList] = useState(false);
+  const [showDialogList, setShowDialogList] =
+    useState<boolean>(false);
+  const [buttonClicked, setButtonClicked] = useState(false);
 
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const fileUrl = useFetchFileDetails(
@@ -19,9 +21,9 @@ export default function Home() {
     imageDefinitionId
   );
 
-  // Create a handler that turns the dialog list on and off
   const handleDialogList = () => {
     setShowDialogList(!showDialogList);
+    setButtonClicked(true);
   };
 
   // FAKE DATA FOR TESTING PURPOSES WITH "Fravær"
@@ -51,18 +53,20 @@ export default function Home() {
         </header>
         {/*
           ========= TODO ================= 
-          Data is fake. It should be fetched from an API.
+          sickDataArray is fake data. It should be fetched from an API.
           ========= TODO =================
         */}
         <section className="w-full md:w-1/3 border-b pb-4">
-          <label className="font-bold">Fravær varsel: </label>
+          <label className="font-bold">Fravær varsel idag: </label>
           {sickDataArray ? (
             <Button
               onClick={handleDialogList}
               variant="link"
               size="sm"
               title="Vis eller skjul fravær"
-              className="underline hover:bg-orange-50">
+              className={`underline hover:bg-orange-50 ${
+                !buttonClicked ? "animate-pulse" : ""
+              }`}>
               {showDialogList ? "Skjul" : "Vis"} fravær (
               {sickDataArray.length})
             </Button>
